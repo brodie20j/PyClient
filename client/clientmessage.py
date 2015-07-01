@@ -15,15 +15,16 @@ class ClientMessage:
         END_FLAG=0x40
         BEGIN_END_FLAG=BEGIN_FLAG | END_FLAG
 
-        FRAME_OFFSET=0 #this is trivial but it's in the Java code
-        VERSION_OFFSET=4 + FRAME_OFFSET
+        FRAME_OFFSET=4 #this is trivial but it's in the Java code
+        VERSION_OFFSET=1 + FRAME_OFFSET
         FLAG_OFFSET=VERSION_OFFSET + 1
-        TYPE_OFFSET=FLAG_OFFSET + 1
-        CORRELATION_OFFSET=TYPE_OFFSET + 2
+        TYPE_OFFSET=FLAG_OFFSET + 2
+        CORRELATION_OFFSET=TYPE_OFFSET + 4
         PARTITION_OFFSET=CORRELATION_OFFSET+4
-        self.DATA_OFFSET=PARTITION_OFFSET+4
-        HEADER_SIZE=self.DATA_OFFSET+2
+        self.DATA_OFFSET=PARTITION_OFFSET+2
+        self.HEADER_SIZE=self.DATA_OFFSET
 
+        self.FRAME_SIZE=self.HEADER_SIZE
         nativeOrder=sys.byteorder
         littleOrder='little'
 
@@ -60,6 +61,8 @@ class ClientMessage:
 
     def setAuthentication(self):
         self.type=0x2
+        self.payload=self.getAuthenticationPayload()
+
     def getAuthenticationPayload(self):
         myArray=[]
         myArray.append("dev")
@@ -68,6 +71,7 @@ class ClientMessage:
         myArray.append(False)
         myArray.append(False)
 
+        return myArray
 
 
 
@@ -88,25 +92,33 @@ class ClientMessage:
         newCorrelation=ctypes.c_uint32(self.correlation)
         newPartition=ctypes.c_int32(self.partition)
         newOffset=ctypes.c_uint16(self.DATA_OFFSET)
+        print(self.DATA_OFFSET)
 
         byteArray=bytearray(newVersion)+bytearray(newFlag)+bytearray(newType)+bytearray(newCorrelation)+bytearray(newPartition)+bytearray(newOffset)
 
-        framesize=len(byteArray)+4
-        if (self.DATA_OFFSET==framesize):
-            print("DING DING")
-        else:
-            print(self.DATA_OFFSET)
-            print(framesize)
-
+        self.FRAME_SIZE=len(byteArray)+4
         if self.payload is None:
-            newSize=ctypes.c_int32(framesize)
+            newSize=ctypes.c_int32(self.FRAME_SIZE)
         else:
+
             #To-do: convert the payload to bytes properly here. In the meanwhile, the line below converts the payload to raw bytes
-            newPayload=bytearray(self.payload)
-            newSize=ctypes.c_int32(framesize+len(newPayload))
+            newPayload=self.processPayload(self.payload)
+            self.FRAME_SIZE=self.FRAME_SIZE+len(newPayload)
+            newSize=ctypes.c_int32(self.FRAME_SIZE)
+            print(newPayload)
             byteArray=byteArray+newPayload
 
         byteArray=bytearray(newSize)+byteArray
         return byteArray
 
+
+    def processPayload(self,payArray):
+        newArray=[]
+        for i in payArray:
+            print(i)
+            if isinstance(i,str):
+                i=i.encode("utf-8")
+            print(bytearray(i))
+            newArray+=bytearray(i)
+        return newArray
 
