@@ -41,6 +41,7 @@ class HazelcastConnection:
             firstpackage=ClientMessage()
             string=(self.connectConstant+self.clientType).encode()
             self.sendPackage(string)
+            firstpackage.setAuthentication()
             self.sendPackage(firstpackage.getPackageForm())
 
             print("Trying to receive response")

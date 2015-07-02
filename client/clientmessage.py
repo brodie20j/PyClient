@@ -11,9 +11,9 @@ class ClientMessage:
         #initialize everything
 
         VERSION=0
-        BEGIN_FLAG=0x80
-        END_FLAG=0x40
-        BEGIN_END_FLAG=BEGIN_FLAG | END_FLAG
+        self.BEGIN_FLAG=0x80
+        self.END_FLAG=0x40
+        self.BEGIN_END_FLAG=self.BEGIN_FLAG | self.END_FLAG
 
         FRAME_OFFSET=4 #this is trivial but it's in the Java code
         VERSION_OFFSET=1 + FRAME_OFFSET
@@ -29,11 +29,10 @@ class ClientMessage:
         littleOrder='little'
 
         self.version=VERSION
-        self.flag=BEGIN_END_FLAG
+        self.flag=self.BEGIN_END_FLAG
         self.optype=0
         self.correlation=0
         self.partition=-1
-        self.type=0
         self.payload=None
         self.retryable=False
 
@@ -60,18 +59,17 @@ class ClientMessage:
         self.payload=payload
 
     def setAuthentication(self):
-        self.type=0x2
+        self.optype=0x2
+        self.setFlagBoth()
         self.payload=self.getAuthenticationPayload()
 
     def getAuthenticationPayload(self):
-        myArray=[]
-        myArray.append("dev")
-        myArray.append("dev-password")
-        myArray.append(False)
-        myArray.append(False)
-        myArray.append(False)
+        user="dev"
+        password="dev-password"
 
-        return myArray
+        byteArray=user.encode()+password.encode()+bytearray(ctypes.c_bool(True))+bytearray(ctypes.c_bool(True))+bytearray(ctypes.c_bool(True))
+
+        return byteArray
 
 
 
@@ -92,7 +90,6 @@ class ClientMessage:
         newCorrelation=ctypes.c_uint32(self.correlation)
         newPartition=ctypes.c_int32(self.partition)
         newOffset=ctypes.c_uint16(self.DATA_OFFSET)
-        print(self.DATA_OFFSET)
 
         byteArray=bytearray(newVersion)+bytearray(newFlag)+bytearray(newType)+bytearray(newCorrelation)+bytearray(newPartition)+bytearray(newOffset)
 
@@ -102,12 +99,11 @@ class ClientMessage:
         else:
 
             #To-do: convert the payload to bytes properly here. In the meanwhile, the line below converts the payload to raw bytes
-            newPayload=self.processPayload(self.payload)
+            newPayload=self.payload
             self.FRAME_SIZE=self.FRAME_SIZE+len(newPayload)
             newSize=ctypes.c_int32(self.FRAME_SIZE)
-            print(newPayload)
             byteArray=byteArray+newPayload
-
+        print(newSize.value)
         byteArray=bytearray(newSize)+byteArray
         return byteArray
 
