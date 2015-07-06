@@ -1,6 +1,5 @@
 __author__ = 'Jonathan Brodie'
 
-
 '''
 Created on 6/24/15
 ClientMessage Class, this is meant to duplicate the ClientMessage Java class as best
@@ -51,6 +50,7 @@ class ClientMessage(object):
         self.partition=-1
         self.payload=None
         self.retryable=False
+        self.extension=None
 
     '''
     Getters and setters.  Typically not used in Python but used here so a user knows what variables they should and
@@ -77,6 +77,10 @@ class ClientMessage(object):
     def setPayload(self,payload):
         self.payload=payload
 
+    def addExtension(self,extension):
+        self.extension=extension
+        self.DATA_OFFSET+=len(extension)
+
     def encodeMessage(self):
         #since Python only uses ints and longs and does weird memory stuff, we need to wrap them here using the C types
         newVersion=ctypes.c_uint8(self.version)
@@ -86,7 +90,12 @@ class ClientMessage(object):
         newPartition=ctypes.c_int32(self.partition)
         newOffset=ctypes.c_uint16(self.DATA_OFFSET)
 
+
+
         byteArray=bytearray(newVersion)+bytearray(newFlag)+bytearray(newType)+bytearray(newCorrelation)+bytearray(newPartition)+bytearray(newOffset)
+
+        if self.extension is not None:
+            byteArray+=self.extension
 
         self.FRAME_SIZE=len(byteArray)+4
         if self.payload is None:
@@ -102,19 +111,20 @@ class ClientMessage(object):
 
     @classmethod
     def decodeMessage(cls, bytesobject):
-        headersize=int.from_bytes(bytesobject[:4],'little')
+        sample=cls()
+        headersize=int.from_bytes(bytesobject[:4],sample.littleOrder)
         bytesobject=bytesobject[4:]
-        version=int.from_bytes(bytesobject[:1],'little')
+        version=int.from_bytes(bytesobject[:1],sample.littleOrder)
         bytesobject=bytesobject[1:]
-        flag=int.from_bytes(bytesobject[:1],'little')
+        flag=int.from_bytes(bytesobject[:1],sample.littleOrder)
         bytesobject=bytesobject[1:]
-        type=int.from_bytes(bytesobject[:2],'little')
+        type=int.from_bytes(bytesobject[:2],sample.littleOrder)
         bytesobject=bytesobject[2:]
-        correlationID=int.from_bytes(bytesobject[:4],'little')
+        correlationID=int.from_bytes(bytesobject[:4],sample.littleOrder)
         bytesobject=bytesobject[4:]
-        partitionID=int.from_bytes(bytesobject[:4],'little')
+        partitionID=int.from_bytes(bytesobject[:4],sample.littleOrder)
         bytesobject=bytesobject[4:]
-        dataOffset=int.from_bytes(bytesobject[:2],'little')
+        dataOffset=int.from_bytes(bytesobject[:2],sample.littleOrder)
         bytesobject=bytesobject[2:]
         return cls.constructMessageFrom(flag,version,type,correlationID,partitionID,dataOffset,bytesobject)
 
@@ -128,6 +138,5 @@ class ClientMessage(object):
         myMessage.partition=pID
         myMessage.DATA_OFFSET=offset
         myMessage.payload=payload
-        print(myMessage.encodeMessage())
-        print(len(myMessage.encodeMessage()))
         return myMessage
+

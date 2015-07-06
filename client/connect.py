@@ -38,17 +38,9 @@ class HazelcastConnection:
         if self.initial:
             return
         else:
-            firstpackage=ClientMessage()
             string=(self.connectConstant+self.clientType).encode()
             self.sendPackage(string)
-            string=("devdev-password").encode()
 
-            self.sendPackage(firstpackage.getPackageForm())
-            self.sendPackage(string)
-
-            print("Trying to receive response")
-            data=self.connection.recv(1024)
-            print(data)
             self.initial=True
 
 

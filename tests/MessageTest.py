@@ -35,6 +35,7 @@ class ClientMessageTests(unittest.TestCase):
 
         msg2=ClientMessage.decodeMessage(frame)
         self.assertEqual(msg.encodeMessage(),msg2.encodeMessage())
+
     def testEncoding(self):
         msg=ClientMessage()
         vr=0
@@ -61,6 +62,99 @@ class ClientMessageTests(unittest.TestCase):
 
         self.assertEqual(frame,msg.encodeMessage())
 
+    def testEncodingWithPayload(self):
+        msg=ClientMessage()
+        vr=0
+        optype=200
+        corrID=0
+        parID=-1
+
+        msg.version=vr
+        msg.optype=optype
+        msg.correlation=corrID
+        msg.partition=parID
+        msg.setPayload(bytearray(ctypes.c_uint32(4203239)))
+        frame = bytearray()
+        #Create a byte array of size 18
+
+
+        frame+=bytearray(ctypes.c_int32(18+4))
+        frame+=bytearray(ctypes.c_uint8(vr))
+        frame+=bytearray(ctypes.c_uint8(192))
+        frame+=bytearray(ctypes.c_uint16(optype))
+        frame+=bytearray(ctypes.c_int32(corrID))
+        frame+=bytearray(ctypes.c_int32(parID))
+        frame+=bytearray(ctypes.c_uint16(18))
+        frame+=bytearray(ctypes.c_uint32(4203239))
+
+        encodedMsg=msg.encodeMessage()
+
+
+        self.assertEqual(frame,encodedMsg)
+
+    def testEncodingWithExtension(self):
+        msg=ClientMessage()
+        vr=0
+        optype=200
+        corrID=0
+        parID=-1
+
+        msg.version=vr
+        msg.optype=optype
+        msg.correlation=corrID
+        msg.partition=parID
+        msg.addExtension(bytearray(ctypes.c_uint32(4203239)))
+        frame = bytearray()
+        #Create a byte array of size 18
+
+
+        frame+=bytearray(ctypes.c_int32(18+4))
+        frame+=bytearray(ctypes.c_uint8(vr))
+        frame+=bytearray(ctypes.c_uint8(192))
+        frame+=bytearray(ctypes.c_uint16(optype))
+        frame+=bytearray(ctypes.c_int32(corrID))
+        frame+=bytearray(ctypes.c_int32(parID))
+        frame+=bytearray(ctypes.c_uint16(22))
+        frame+=bytearray(ctypes.c_uint32(4203239))
+
+        encodedMsg=msg.encodeMessage()
+
+
+        self.assertEqual(frame,encodedMsg)
+
+    def testEncodingWithExtensionAndPayload(self):
+        msg=ClientMessage()
+        vr=0
+        optype=200
+        corrID=0
+        parID=-1
+
+        msg.version=vr
+        msg.optype=optype
+        msg.correlation=corrID
+        msg.partition=parID
+        msg.addExtension(bytearray(ctypes.c_uint32(4203239)))
+        msg.setPayload(bytearray(ctypes.c_uint32(4203239)))
+
+        frame = bytearray()
+        #Create a byte array of size 18
+
+
+        frame+=bytearray(ctypes.c_int32(18+4+4))
+        frame+=bytearray(ctypes.c_uint8(vr))
+        frame+=bytearray(ctypes.c_uint8(192))
+        frame+=bytearray(ctypes.c_uint16(optype))
+        frame+=bytearray(ctypes.c_int32(corrID))
+        frame+=bytearray(ctypes.c_int32(parID))
+        frame+=bytearray(ctypes.c_uint16(22))
+        frame+=bytearray(ctypes.c_uint32(4203239))
+        frame+=bytearray(ctypes.c_uint32(4203239))
+
+
+        encodedMsg=msg.encodeMessage()
+
+
+        self.assertEqual(frame,encodedMsg)
 
 
 
