@@ -7,9 +7,9 @@ Basic connection class that will connect to a Hazelcast Cluster
 
 
 import socket
-from client.clientmessage import ClientMessage
-class HazelcastConnection:
+from hzclient.clientmessage import ClientMessage,AuthenticationMessage
 
+class HazelcastConnection:
     def __init__(self):
         #initialize a default local connection, the user can change these using the below methods
         self.TCP_IP='127.0.0.1'
@@ -37,10 +37,21 @@ class HazelcastConnection:
         #only run the six bytes at the beginning during the client-server dialog
         if self.initial:
             return
-        else:
-            string=(self.connectConstant+self.clientType).encode()
-            self.sendPackage(string)
 
+        string=(self.connectConstant+self.clientType).encode()
+        self.sendPackage(string)
+
+    def authenticateConnection(self):
+        if self.initial:
+            return
+        authMsg=AuthenticationMessage()
+        authMsg.DATA_OFFSET=64
+        encoded=authMsg.encodeMessage()
+        print authMsg.FRAME_SIZE
+        print len(encoded)
+        self.sendPackage(encoded)
+        myDad=self.connection.recv(4096)
+        if myDad is not None:
             self.initial=True
 
 

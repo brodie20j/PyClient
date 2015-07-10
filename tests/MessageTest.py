@@ -1,8 +1,9 @@
 __author__ = 'jonathanbrodie'
+from hzclient.clientmessage import ClientMessage
+from hzclient.clientmessage import AuthenticationMessage
+
 
 import unittest,ctypes
-from client.clientmessage import ClientMessage
-
 class ClientMessageTests(unittest.TestCase):
 
     def testHeaderNormal(self):
@@ -156,6 +157,14 @@ class ClientMessageTests(unittest.TestCase):
 
         self.assertEqual(frame,encodedMsg)
 
+    def testAuthentication(self):
+        msg=AuthenticationMessage()
+        newmsg=msg.encodeMessage()
+        print msg.FRAME_SIZE
+        print msg.HEADER_SIZE
+        print msg.DATA_OFFSET
+        msg2=AuthenticationMessage.decodeMessage(newmsg)
+        self.assertEqual(msg.FRAME_SIZE,msg2.FRAME_SIZE)
 
 
 if __name__ == '__main__':

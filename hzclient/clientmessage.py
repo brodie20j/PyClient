@@ -52,6 +52,23 @@ class ClientMessage(object):
         self.retryable=False
         self.extension=None
 
+    def updateSize(self):
+        newVersion=ctypes.c_uint8(self.version)
+        newFlag=ctypes.c_uint8(self.flag)
+        newType=ctypes.c_uint16(self.optype)
+        newCorrelation=ctypes.c_uint32(self.correlation)
+        newPartition=ctypes.c_int32(self.partition)
+        newOffset=ctypes.c_uint16(self.DATA_OFFSET)
+
+        byteArray=bytearray(newVersion)+bytearray(newFlag)+bytearray(newType)+bytearray(newCorrelation)+bytearray(newPartition)+bytearray(newOffset)
+
+        if self.extension is not None:
+            byteArray+=self.payload
+
+        if self.payload is not None:
+            byteArray+=self.payload
+        self.FRAME_SIZE=len(byteArray)+4
+
     '''
     Getters and setters.  Typically not used in Python but used here so a user knows what variables they should and
     shouldn't be messing with
@@ -90,8 +107,6 @@ class ClientMessage(object):
         newPartition=ctypes.c_int32(self.partition)
         newOffset=ctypes.c_uint16(self.DATA_OFFSET)
 
-
-
         byteArray=bytearray(newVersion)+bytearray(newFlag)+bytearray(newType)+bytearray(newCorrelation)+bytearray(newPartition)+bytearray(newOffset)
 
         if self.extension is not None:
@@ -101,7 +116,6 @@ class ClientMessage(object):
         if self.payload is None:
             newSize=ctypes.c_int32(self.FRAME_SIZE)
         else:
-            #To-do: convert the payload to bytes properly here. In the meanwhile, the line below converts the payload to raw bytes
             newPayload=self.payload
             self.FRAME_SIZE=self.FRAME_SIZE+len(newPayload)
             newSize=ctypes.c_int32(self.FRAME_SIZE)
@@ -111,20 +125,19 @@ class ClientMessage(object):
 
     @classmethod
     def decodeMessage(cls, bytesobject):
-        sample=cls()
-        headersize=int.from_bytes(bytesobject[:4],sample.littleOrder)
+        headersize=struct.unpack_from("<i",bytes(bytesobject[:4]))[0]
         bytesobject=bytesobject[4:]
-        version=int.from_bytes(bytesobject[:1],sample.littleOrder)
+        version=struct.unpack_from("<b", bytes(bytesobject[:1]))[0]
         bytesobject=bytesobject[1:]
-        flag=int.from_bytes(bytesobject[:1],sample.littleOrder)
+        flag=struct.unpack_from("<B", bytes(bytesobject[:1]))[0]
         bytesobject=bytesobject[1:]
-        type=int.from_bytes(bytesobject[:2],sample.littleOrder)
+        type=struct.unpack_from("<h", bytes(bytesobject[:2]))[0]
         bytesobject=bytesobject[2:]
-        correlationID=int.from_bytes(bytesobject[:4],sample.littleOrder)
+        correlationID=struct.unpack_from("<i", bytes(bytesobject[:4]))[0]
         bytesobject=bytesobject[4:]
-        partitionID=int.from_bytes(bytesobject[:4],sample.littleOrder)
+        partitionID=struct.unpack_from("<i", bytes(bytesobject[:4]))[0]
         bytesobject=bytesobject[4:]
-        dataOffset=int.from_bytes(bytesobject[:2],sample.littleOrder)
+        dataOffset=struct.unpack_from("<h", bytes(bytesobject[:3]))[0]
         bytesobject=bytesobject[2:]
         return cls.constructMessageFrom(flag,version,type,correlationID,partitionID,dataOffset,bytesobject)
 
@@ -138,5 +151,35 @@ class ClientMessage(object):
         myMessage.partition=pID
         myMessage.DATA_OFFSET=offset
         myMessage.payload=payload
+        myMessage.updateSize()
         return myMessage
+
+class AuthenticationMessage(ClientMessage):
+    def __init__(self):
+        super(AuthenticationMessage,self).__init__()
+        self.initializeAuthentication()
+
+    def initializeAuthentication(self):
+        username="dev"
+        password="dev-pass"
+        self.optype=0x2
+        uuIDisNull=False
+        myuuID=uuid.uuid1().bytes
+        OwneruuIDisNull=False
+        owneruuID=uuid.uuid1().bytes
+        isOwnerConnection=True
+
+        newUser=username.encode()
+        newPass=password.encode()
+        newbool1=ctypes.c_bool(uuIDisNull)
+        newbool2=ctypes.c_bool(OwneruuIDisNull)
+        newbool3=ctypes.c_bool(isOwnerConnection)
+
+        authpayload=newUser+newPass+bytearray(newbool1)+myuuID+bytearray(newbool2)+owneruuID+bytearray(newbool3)
+        self.setPayload(authpayload)
+
+
+
+
+
 
