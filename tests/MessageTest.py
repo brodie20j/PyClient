@@ -85,7 +85,7 @@ class ClientMessageTests(unittest.TestCase):
         frame+=bytearray(ctypes.c_uint16(optype))
         frame+=bytearray(ctypes.c_int32(corrID))
         frame+=bytearray(ctypes.c_int32(parID))
-        frame+=bytearray(ctypes.c_uint16(18))
+        frame+=bytearray(ctypes.c_uint16(18+4))
         frame+=bytearray(ctypes.c_uint32(4203239))
 
         encodedMsg=msg.encodeMessage()
@@ -147,7 +147,7 @@ class ClientMessageTests(unittest.TestCase):
         frame+=bytearray(ctypes.c_uint16(optype))
         frame+=bytearray(ctypes.c_int32(corrID))
         frame+=bytearray(ctypes.c_int32(parID))
-        frame+=bytearray(ctypes.c_uint16(22))
+        frame+=bytearray(ctypes.c_uint16(26))
         frame+=bytearray(ctypes.c_uint32(4203239))
         frame+=bytearray(ctypes.c_uint32(4203239))
 
@@ -160,9 +160,7 @@ class ClientMessageTests(unittest.TestCase):
     def testAuthentication(self):
         msg=AuthenticationMessage()
         newmsg=msg.encodeMessage()
-        print msg.FRAME_SIZE
-        print msg.HEADER_SIZE
-        print msg.DATA_OFFSET
+
         msg2=AuthenticationMessage.decodeMessage(newmsg)
         self.assertEqual(msg.FRAME_SIZE,msg2.FRAME_SIZE)
 

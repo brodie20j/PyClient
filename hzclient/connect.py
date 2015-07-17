@@ -15,8 +15,10 @@ class HazelcastConnection:
         self.TCP_IP='127.0.0.1'
         self.TCP_PORT=5701
         self.connection=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #self.connection.setblocking(0)
+        self.readFrom=[self.connection]
         self.initial=False
-        self.connectConstant="CB2"
+        self.connectConstant="CB2" #Binary Protocol constant
         self.clientType="PHY" #Python client authorization
 
     def setIPAddress(self, newIP):
@@ -45,27 +47,35 @@ class HazelcastConnection:
         if self.initial:
             return
         authMsg=AuthenticationMessage()
-        authMsg.DATA_OFFSET=64
         encoded=authMsg.encodeMessage()
-        print authMsg.FRAME_SIZE
-        print len(encoded)
         self.sendPackage(encoded)
-        myDad=self.connection.recv(4096)
-        if myDad is not None:
+        response=self.connection.recv(1024)
+
+        if response is not None:
             self.initial=True
 
 
     def sendPackage(self, package):
         #do actual protocol stuff here
         totalsent=0
+        self.connection.sendall(package)
+        '''
         while totalsent < len(package):
             print("sending package...")
             sent=self.connection.send(package)
             if sent == 0:
                 raise RuntimeError("Connection broken")
             totalsent=totalsent+sent
+        '''
 
     def closeConnection(self):
         self.connection.close()
+
+    def waitAndGetPackage(self):
+        servermsg=self.connection.recv(32768)
+        #if the connection is broken - break
+        if servermsg is None:
+            print "connection broken"
+        return servermsg
 
 
