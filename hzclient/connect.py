@@ -6,10 +6,10 @@ Basic connection class that will connect to a Hazelcast Cluster
 '''
 
 
-import socket
+import socket,asyncore
 from hzclient.clientmessage import ClientMessage,AuthenticationMessage
 
-class HazelcastConnection:
+class HazelcastConnection(object):
     def __init__(self):
         #initialize a default local connection, the user can change these using the below methods
         self.TCP_IP='127.0.0.1'
@@ -24,7 +24,7 @@ class HazelcastConnection:
     def setIPAddress(self, newIP):
         self.TCP_IP=newIP
 
-    def setPortNumber(self, newPort):
+    def setPort(self, newPort):
         self.TCP_PORT=newPort
 
     def connectToCluster(self):

@@ -1,14 +1,14 @@
 __author__ = 'jonathanbrodie'
-
-from hzclient.connect import HazelcastConnection
+import sys
+from employee import Employee
 from hzclient.hazelclient import HazelcastClient
 def main():
-    myClient=HazelcastClient()
-    queue=myClient.getQueue("queue")
-    print "Initial size of queue is: "+str(queue.size())
-    print "Clearing the queue..."
-    queue.clear()
-    print "Finished clearing queue."
-    print "Final size of queue is: "+str(queue.size())
-    print "Finished printing size"
-main()
+    client=HazelcastClient()
+    myQueue=client.getQueue("queue")
+    myQueue.put("item")
+    print myQueue.size()
+    sys.exit("Exiting")
+
+if __name__ == '__main__':
+    main()
+

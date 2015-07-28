@@ -160,15 +160,43 @@ class ClientMessage(object):
         myMessage.payload=payload
         myMessage.updateSize()
         return myMessage
-    def extractIntFromPayload(self,numBytes):
-        int=self.payload[:numBytes]
-        self.payload=self.payload[numBytes:]
+    def extractIntFromPayload(self):
+        int=self.payload[:4]
+        self.payload=self.payload[4:]
         int2=struct.unpack_from("<i", int)[0]
         return int2
-
+    def extractLongFromPayload(self):
+        int=self.payload[:5]
+        self.payload=self.payload[5:]
+        int2=struct.unpack_from("<l", int)[0]
+        return int2
+    def extractBytesFromPayload(self):
+        int=self.payload[:4]
+        self.payload=self.payload[4:]
+        int2=struct.unpack_from("<i", int)[0]
+        bytesobject=self.payload[:int2]
+        self.payload=self.payload[int2:]
+        return bytesobject
+    def extractStringFromPayload(self):
+        int=self.payload[:4]
+        self.payload=self.payload[4:]
+        int2=struct.unpack_from("<i", int)[0]
+        bytesobject=self.payload[:int2].decode("hex")
+        self.payload=self.payload[int2:]
+        return bytesobject
+    def extractBooleanFromPayload(self):
+        print len(self.payload)
+        bool=self.payload[0]
+        self.payload=self.payload[1:]
+        bool2=struct.unpack_from("<b",bool)[0]
+        print bool2
+        if bool2==0:
+            return False
+        else:
+            return True
 class AuthenticationMessage(ClientMessage):
     def __init__(self):
-        super(AuthenticationMessage,self).__init__()
+        super(AuthenticationMessage, self).__init__()
         self.initializeAuthentication()
 
     def initializeAuthentication(self):
@@ -190,12 +218,7 @@ class AuthenticationMessage(ClientMessage):
 
         authpayload=bytearray(ctypes.c_uint32(userlength))+newUser+bytearray(ctypes.c_uint32(passwordlength))+newPass+bytearray(newbool1)+bytearray(newbool2)+bytearray(newbool3)
         self.setPayload(authpayload)
-    def hackAuthenticationMessage(self):
-        bytelist=[0x2a, 0x00, 0x00, 0x00, 0x01, 0xc0, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x12, 0x00, 0x04, 0x00, 0x00, 0x00, 0x64, 0x65, 0x76, 0x32, 0x09, 0x00, 0x00, 0x00, 0x64, 0x65, 0x76, 0x2d, 0x70, 0x61, 0x73, 0x73, 0x32, 0x01, 0x01, 0x01]
-        return bytearray(bytelist)
-    def hackAuthenticationPayload(self):
-        bytelist=[0x04, 0x00, 0x00, 0x00, 0x64, 0x65, 0x76, 0x32, 0x09, 0x00, 0x00, 0x00, 0x64, 0x65, 0x76, 0x2d, 0x70, 0x61, 0x73, 0x73, 0x32, 0x01, 0x01, 0x01]
-        self.setPayload(bytearray(bytelist))
+
 
 class PartitionMessage(ClientMessage):
     def __init__(self):
