@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 
 import ctypes
 from hzclient.clientmessage import ClientMessage

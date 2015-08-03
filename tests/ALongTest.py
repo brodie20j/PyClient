@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 import unittest,ctypes
 from hzclient.hazelclient import HazelcastClient
 from util import murmurhash

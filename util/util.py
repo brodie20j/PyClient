@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 
 def raiseNotDefined():
     raise NotImplementedError("This method has not been defined.")

@@ -1,10 +1,7 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 from connect import HazelcastConnection
-from hzclient.clientmessage import QueueMessage
-from hzclient.clientmessage import ClientMessage
-from hzclient.clientmessage import PartitionMessage
+
 from hzclient.codec import alongcodec
-from hzclient.codec import queuecodec
 from hzclient.codec import proxycodec
 
 
@@ -14,8 +11,10 @@ class ALongProxy(object):
         self.title=title
         self.connection=conn
         firstpack=proxycodec.createProxy(self.title,"hz:impl:atomicLongService")
+        self.connection.adjustCorrelationId(firstpack)
         self.connection.sendPackage(firstpack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
+
+        response=self.connection.getPackageWithCorrelationId(firstpack.correlation,True)
         if response is not None:
             print "Initialized and connected proxy!"
         else:
@@ -23,15 +22,17 @@ class ALongProxy(object):
 
     def getAndIncrement(self):
         pack=alongcodec.getandincrementEncode(self.title)
+        self.connection.adjustCorrelationId(pack)
         self.connection.sendPackage(pack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
+        response=self.connection.getPackageWithCorrelationId(pack.correlation,True)
         decoded=alongcodec.getandincrementDecode(response)
         return decoded
 
     def get(self):
         pack=alongcodec.getEncode(self.title)
+        self.connection.adjustCorrelationId(pack)
         self.connection.sendPackage(pack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
+        response=self.connection.getPackageWithCorrelationId(pack.correlation,True)
         decoded=alongcodec.getDecode(response)
         return decoded
 
@@ -76,74 +77,3 @@ class ALongProxy(object):
         response=self.connection.waitAndGetPackage()
         decoded=alongcodec.setDecode(response)
         return decoded
-
-
-class QueueProxy(object):
-    def __init__(self,title,conn):
-        self.title=title
-        self.connection=conn
-        firstpack=proxycodec.createProxy(self.title,"hz:impl:queueService")
-        self.connection.sendPackage(firstpack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-        if response is not None:
-            print "Initialized and connected proxy!"
-        else:
-            print "Unable to connect to server."
-
-    def put(self,item):
-
-        #serialization of item here
-        queuemsg=queuecodec.putEncode(self.title,item)
-        self.connection.sendPackage(queuemsg.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-
-
-    def size(self):
-        '''
-        part=PartitionMessage()
-        self.connection.sendPackage(part.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-        print "Size of Partition ID Response: "
-        print len(response)
-        print "Actual Partition ID Response: " + response
-        '''
-        pack=queuecodec.sizeEncode(self.title)
-        self.connection.sendPackage(pack.encodeMessage())
-
-        response=self.connection.waitAndGetPackage()
-        responseMessage=queuecodec.sizeDecode(response)
-        size=responseMessage
-        return size
-
-    def clear(self):
-
-        queuemsg=QueueMessage()
-        queuemsg.clear(self.title)
-        self.connection.sendPackage(queuemsg.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-        print "Size of server's response to clear: "+str(len(response))
-        #no return from server
-
-class SetProxy(object):
-    def __init__(self,title,conn):
-        self.title=title
-        self.connection=conn
-        firstpack=proxycodec.createProxy(self.title,"hz:impl:setService")
-        self.connection.sendPackage(firstpack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-        if response is not None:
-            print "Initialized and connected proxy!"
-        else:
-            print "Unable to connect to server."
-
-class ListProxy(object):
-    def __init__(self,title,conn):
-        self.title=title
-        self.connection=conn
-        firstpack=proxycodec.createProxy(self.title,"hz:impl:setService")
-        self.connection.sendPackage(firstpack.encodeMessage())
-        response=self.connection.waitAndGetPackage()
-        if response is not None:
-            print "Initialized and connected proxy!"
-        else:
-            print "Unable to connect to server."

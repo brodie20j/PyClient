@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 
 import struct,sys
 #murmur hash function to determine partition

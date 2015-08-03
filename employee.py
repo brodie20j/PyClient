@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 
 class Employee(object):
     def __init__(self,name):

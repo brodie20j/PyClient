@@ -83,6 +83,10 @@ class ClientMessage(object):
         self.flag=self.END_FLAG
     def setFlagBoth(self):
         self.flag=self.BEGIN_END_FLAG
+    def isEvent(self):
+        return self.flag == 0xc1
+    def setEventFlag(self):
+        self.flag=0xc1
     def setOperationType(self, newType):
         self.optype=newType
     def getOperationType(self):
@@ -93,8 +97,15 @@ class ClientMessage(object):
         return self.partition
     def setPayload(self,payload):
         self.payload=payload
+    def set(self,item):
+        if self.payload is None:
+            self.payload=item
+        else:
+            self.payload+=item
     def setCorrelation(self,newCorrelation):
         self.correlation=newCorrelation
+    def setRetryable(self,bool):
+        self.retryable=bool
     def addExtension(self,extension):
         self.extension=extension
         self.DATA_OFFSET+=len(extension)
@@ -146,7 +157,8 @@ class ClientMessage(object):
         bytesobject=bytesobject[4:]
         dataOffset=struct.unpack_from("<h", bytes(bytesobject[:2]))[0]
         bytesobject=bytesobject[2:]
-        return cls.constructMessageFrom(flag,version,type,correlationID,partitionID,dataOffset,bytesobject)
+        new=cls.constructMessageFrom(flag,version,type,correlationID,partitionID,dataOffset,bytesobject)
+        return new
 
     @classmethod
     def constructMessageFrom(cls, flag,version,msgtype,corrID,pID,offset,payload):
@@ -181,7 +193,7 @@ class ClientMessage(object):
         int=self.payload[:4]
         self.payload=self.payload[4:]
         int2=struct.unpack_from("<i", int)[0]
-        bytesobject=self.payload[:int2].decode("hex")
+        bytesobject=self.payload[:int2].decode("UTF8")
         self.payload=self.payload[int2:]
         return bytesobject
     def extractBooleanFromPayload(self):
@@ -197,6 +209,7 @@ class ClientMessage(object):
 class AuthenticationMessage(ClientMessage):
     def __init__(self):
         super(AuthenticationMessage, self).__init__()
+        self.correlation=0
         self.initializeAuthentication()
 
     def initializeAuthentication(self):
@@ -218,50 +231,3 @@ class AuthenticationMessage(ClientMessage):
 
         authpayload=bytearray(ctypes.c_uint32(userlength))+newUser+bytearray(ctypes.c_uint32(passwordlength))+newPass+bytearray(newbool1)+bytearray(newbool2)+bytearray(newbool3)
         self.setPayload(authpayload)
-
-
-class PartitionMessage(ClientMessage):
-    def __init__(self):
-        super(PartitionMessage,self).__init__()
-        self.optype=0x8
-        self.correlation=106
-
-
-class QueueMessage(ClientMessage):
-    def __init__(self):
-        super(QueueMessage,self).__init__()
-        #this is hacked!
-        self.setPartition(50)
-
-    def getQueue(self,title):
-        self.optype=0x5
-        self.correlation=100
-        newtitle=title.encode("UTF8")
-
-        body="hz:impl:queueService"
-        newbody=body.encode("UTF8")
-
-        payload=bytearray(ctypes.c_uint32(len(newtitle)))+newtitle+bytearray(ctypes.c_uint32(len(newbody)))+newbody
-        self.setPayload(payload)
-
-    def put(self,title,item):
-        self.optype=0x0302
-        self.correlation=101
-        newtitle=title.encode("UTF8")
-        newitem=item.encode("UTF8")
-        payload=bytearray(ctypes.c_uint32(len(newtitle)))+newtitle+bytearray(ctypes.c_uint32(len(newitem)))+newitem
-        self.setPayload(payload)
-
-    def size(self,title):
-        self.optype=0x0303
-        self.setCorrelation(102)
-        newtitle=title.encode("UTF8")
-        payload=bytearray(ctypes.c_int32(len(newtitle)))+newtitle
-        self.setPayload(payload)
-
-    def clear(self,title):
-        self.optype=0x030F
-        self.setCorrelation(122)
-        newtitle=title.encode("UTF8")
-        payload=bytearray(ctypes.c_int32(len(newtitle)))+newtitle
-        self.setPayload(payload)

@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 
 '''
 Basic connection class that will connect to a Hazelcast Cluster

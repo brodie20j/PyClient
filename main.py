@@ -1,14 +1,12 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 import sys
 from employee import Employee
 from hzclient.hazelclient import HazelcastClient
 def main():
     client=HazelcastClient()
-    myQueue=client.getQueue("queue")
-    myQueue.put("item")
-    print myQueue.size()
-    sys.exit("Exiting")
-
+    along=client.getAtomicLong("along")
+    i=along.getAndIncrement()
+    print i == along.get()
 if __name__ == '__main__':
     main()
 

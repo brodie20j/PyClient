@@ -1,4 +1,4 @@
-__author__ = 'jonathanbrodie'
+__author__ = 'Jonathan Brodie'
 from hzclient.clientmessage import ClientMessage
 from hzclient.clientmessage import AuthenticationMessage
 
